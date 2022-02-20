@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (app *application) addCategoryHandler(w http.ResponseWriter, r *http.Request){
+func (app *application) addCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Name string `json:"name"`
 	}
@@ -19,9 +19,8 @@ func (app *application) addCategoryHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	category := &data.Categories{
-		Name:   input.Name,
+		Name: input.Name,
 	}
-
 
 	err = app.models.Categories.Insert(category)
 	if err != nil {
@@ -38,7 +37,7 @@ func (app *application) addCategoryHandler(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (app *application) showCategoryHandler(w http.ResponseWriter, r *http.Request){
+func (app *application) showCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := app.readIDParam(r)
 	if err != nil {
 		app.notFoundResponse(w, r)
@@ -62,9 +61,9 @@ func (app *application) showCategoryHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (app *application) listCategoriesHandler(w http.ResponseWriter, r *http.Request){
+func (app *application) listCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 
-	categories,err := app.models.Categories.GetAll()
+	categories, err := app.models.Categories.GetAll()
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -76,7 +75,7 @@ func (app *application) listCategoriesHandler(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func (app *application) editCategoryHandler(w http.ResponseWriter, r *http.Request){
+func (app *application) editCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := app.readIDParam(r)
 	if err != nil {
 		app.notFoundResponse(w, r)
@@ -108,7 +107,6 @@ func (app *application) editCategoryHandler(w http.ResponseWriter, r *http.Reque
 		category.Name = *input.Name
 	}
 
-
 	err = app.models.Categories.Update(category)
 	if err != nil {
 		switch {
@@ -126,6 +124,26 @@ func (app *application) editCategoryHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (app *application) deleteCategoryHandler(w http.ResponseWriter, r *http.Request){
-}
+func (app *application) deleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
 
+	err = app.models.Categories.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"message": "category successfully deleted"}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
